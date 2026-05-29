@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Upload Log · CloudLog Analyzer{% endblock %}
+{% block content %}
+<div style="max-width:640px; margin:0 auto;">
+  <div style="margin-bottom:2rem;">
+    <h1 style="font-family:var(--font-display); font-weight:800; font-size:1.6rem; letter-spacing:-0.02em;">Upload Log File</h1>
+    <p style="color:var(--muted); font-size:0.78rem; margin-top:0.3rem;">Trigger the MapReduce pipeline on your raw access log</p>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title">Select File</div>
+    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+      <div id="dropzone" style="
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 1.5rem;
+      " onclick="document.getElementById('logfile').click()">
+        <div style="font-size:2.5rem; margin-bottom:0.75rem;">📋</div>
+        <p style="color:var(--text); font-size:0.88rem; margin-bottom:0.3rem;">Drop your <code style="color:var(--accent);">.log</code> or <code style="color:var(--accent);">.txt</code> file here</p>
+        <p style="color:var(--muted); font-size:0.75rem;">or click to browse · Max 50MB</p>
+        <p id="fileName" style="margin-top:0.75rem; color:var(--accent3); font-size:0.78rem; display:none;"></p>
+      </div>
+      <input type="file" name="logfile" id="logfile" accept=".log,.txt" style="display:none;" required/>
+
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="submitBtn">
+        ▶ Run MapReduce Analysis
+      </button>
+    </form>
+  </div>
+
+  <!-- Pipeline visualization -->
+  <div class="card">
+    <div class="card-title">MapReduce Pipeline</div>
+    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+      {% for step, color, desc in [
+        ('SPLIT', '#00e5ff', 'Divide into chunks'),
+        ('MAP', '#a8ff78', 'Parse & emit (k,v)'),
+        ('SHUFFLE', '#ffd700', 'Group by key'),
+        ('REDUCE', '#ff4d6d', 'Aggregate counts')
+      ] %}
+      <div style="flex:1; min-width:120px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:0.75rem; text-align:center;">
+        <div style="font-family:var(--font-display); font-weight:800; color:{{ color }}; font-size:0.85rem;">{{ step }}</div>
+        <div style="font-size:0.68rem; color:var(--muted); margin-top:0.2rem;">{{ desc }}</div>
+      </div>
+      {% if not loop.last %}
+      <div style="color:var(--muted); font-size:1.2rem;">→</div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    <div class="terminal" style="margin-top:1rem;">
+      <span class="cmd"># Example emitted pairs</span><br/>
+      <span class="val">MAP:</span> ("STATUS_404", 1), ("HOUR_14", 1), ("METHOD_GET", 1)<br/>
+      <span class="val">SHUFFLE:</span> "STATUS_404" → [1, 1, 1, 1 ...]<br/>
+      <span class="val">REDUCE:</span> "STATUS_404" → <span class="err">247</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const dz = document.getElementById('dropzone');
+const fi = document.getElementById('logfile');
+const fn = document.getElementById('fileName');
+const form = document.getElementById('uploadForm');
+const btn = document.getElementById('submitBtn');
+
+fi.addEventListener('change', () => {
+  if (fi.files[0]) {
+    fn.textContent = '✓ ' + fi.files[0].name;
+    fn.style.display = 'block';
+    dz.style.borderColor = 'var(--accent)';
+  }
+});
+
+['dragover','dragenter'].forEach(e => dz.addEventListener(e, ev => {
+  ev.preventDefault(); dz.style.borderColor = 'var(--accent)';
+}));
+['dragleave','drop'].forEach(e => dz.addEventListener(e, ev => {
+  ev.preventDefault(); dz.style.borderColor = 'var(--border)';
+}));
+dz.addEventListener('drop', ev => {
+  const f = ev.dataTransfer.files[0];
+  if (f) {
+    const dt = new DataTransfer(); dt.items.add(f);
+    fi.files = dt.files;
+    fn.textContent = '✓ ' + f.name;
+    fn.style.display = 'block';
+    dz.style.borderColor = 'var(--accent)';
+  }
+});
+
+form.addEventListener('submit', () => {
+  btn.textContent = '⏳ Processing…';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}

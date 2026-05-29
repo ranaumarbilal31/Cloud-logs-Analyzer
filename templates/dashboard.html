@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · CloudLog Analyzer{% endblock %}
+{% block content %}
+<div style="margin-bottom:2rem; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+  <div>
+    <h1 style="font-family:var(--font-display); font-weight:800; font-size:1.6rem; letter-spacing:-0.02em;">Dashboard</h1>
+    <p style="color:var(--muted); font-size:0.78rem; margin-top:0.3rem;">MapReduce analysis history · {{ total }} total runs</p>
+  </div>
+  <a href="{{ url_for('upload') }}" class="btn btn-primary">+ Upload Log File</a>
+</div>
+
+<div class="stat-grid" style="margin-bottom:2rem;">
+  <div class="stat-box">
+    <div class="stat-value">{{ total }}</div>
+    <div class="stat-label">Total Analyses</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" style="color:var(--accent3);">{{ analyses|length }}</div>
+    <div class="stat-label">Recent (last 10)</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" style="color:var(--accent2);">
+      {% set total_errors = namespace(n=0) %}
+      {% for a in analyses %}
+        {% if a.results and a.results.errors %}
+          {% for v in a.results.errors.values() %}{% set total_errors.n = total_errors.n + v %}{% endfor %}
+        {% endif %}
+      {% endfor %}
+      {{ total_errors.n }}
+    </div>
+    <div class="stat-label">Total Errors Detected</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" style="color:var(--accent);">
+      {% if analyses %}{{ analyses[0].duration_ms or 0 }}ms{% else %}—{% endif %}
+    </div>
+    <div class="stat-label">Last Run Duration</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Recent Analyses</div>
+  {% if analyses %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Filename</th>
+        <th>Uploaded By</th>
+        <th>Lines</th>
+        <th>Requests</th>
+        <th>Errors</th>
+        <th>Peak Hour</th>
+        <th>Duration</th>
+        <th>Time</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in analyses %}
+      <tr>
+        <td style="color:var(--muted);">{{ a.id }}</td>
+        <td style="color:var(--accent);">{{ a.filename }}</td>
+        <td>{{ a.uploaded_by }}</td>
+        <td>{{ a.total_lines or '—' }}</td>
+        <td>{{ a.results.total_requests if a.results else '—' }}</td>
+        <td>
+          {% if a.results and a.results.errors %}
+            {% set err_count = namespace(n=0) %}
+            {% for v in a.results.errors.values() %}{% set err_count.n = err_count.n + v %}{% endfor %}
+            <span class="badge {% if err_count.n > 0 %}badge-error{% else %}badge-ok{% endif %}">{{ err_count.n }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if a.results and a.results.peak_hour %}
+            <span class="badge badge-info">{{ a.results.peak_hour }}:00</span>
+          {% else %}—{% endif %}
+        </td>
+        <td style="color:var(--muted);">{{ a.duration_ms or '—' }}ms</td>
+        <td style="color:var(--muted); font-size:0.72rem;">{{ a.uploaded_at.strftime('%m/%d %H:%M') if a.uploaded_at else '' }}</td>
+        <td><a href="{{ url_for('result', analysis_id=a.id) }}" class="btn btn-outline" style="padding:0.25rem 0.6rem; font-size:0.72rem;">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center; padding:3rem; color:var(--muted);">
+    <div style="font-size:2rem; margin-bottom:0.75rem;">📂</div>
+    <p>No analyses yet. <a href="{{ url_for('upload') }}" style="color:var(--accent);">Upload a log file</a> to get started.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

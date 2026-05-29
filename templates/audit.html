@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Audit Log · CloudLog Analyzer{% endblock %}
+{% block content %}
+<div style="margin-bottom:2rem;">
+  <h1 style="font-family:var(--font-display); font-weight:800; font-size:1.6rem; letter-spacing:-0.02em;">Audit Trail</h1>
+  <p style="color:var(--muted); font-size:0.78rem; margin-top:0.3rem;">Last 100 IAM events · Admin only</p>
+</div>
+<div class="card">
+  {% if logs %}
+  <table>
+    <thead>
+      <tr><th>#</th><th>User</th><th>Action</th><th>IP Address</th><th>Timestamp</th></tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td style="color:var(--muted);">{{ log.id }}</td>
+        <td style="color:var(--accent);">{{ log.username }}</td>
+        <td>
+          {% if 'LOGIN_SUCCESS' in log.action %}
+            <span class="badge badge-ok">{{ log.action }}</span>
+          {% elif 'FAILED' in log.action %}
+            <span class="badge badge-error">{{ log.action }}</span>
+          {% elif 'UPLOAD' in log.action %}
+            <span class="badge badge-info">{{ log.action }}</span>
+          {% else %}
+            <span class="badge" style="background:var(--surface2); color:var(--muted);">{{ log.action }}</span>
+          {% endif %}
+        </td>
+        <td style="color:var(--muted); font-size:0.78rem;">{{ log.ip_address }}</td>
+        <td style="color:var(--muted); font-size:0.72rem;">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center; padding:3rem; color:var(--muted);">No audit events yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

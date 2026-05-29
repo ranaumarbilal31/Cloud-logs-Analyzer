@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}CloudLog Analyzer{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --surface: #111318;
+      --surface2: #1a1d24;
+      --border: #252830;
+      --accent: #00e5ff;
+      --accent2: #ff4d6d;
+      --accent3: #a8ff78;
+      --text: #e2e8f0;
+      --muted: #6b7280;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-display: 'Syne', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* ── NAV ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-brand {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    .nav-brand span { color: var(--accent2); }
+    .nav-links { display: flex; gap: 0.25rem; align-items: center; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.78rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--surface2); }
+    .nav-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.72rem;
+      color: var(--accent3);
+      margin-left: 0.5rem;
+    }
+    /* ── LAYOUT ── */
+    main { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+    /* ── ALERTS ── */
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+      border-left: 3px solid;
+    }
+    .alert-error { background: rgba(255,77,109,0.1); border-color: var(--accent2); color: #fca5a5; }
+    .alert-success { background: rgba(168,255,120,0.08); border-color: var(--accent3); color: var(--accent3); }
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.6rem 1.25rem;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .btn-primary:hover { background: #33eaff; transform: translateY(-1px); }
+    .btn-danger { background: var(--accent2); color: #fff; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    /* ── TABLE ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th { color: var(--muted); font-weight: 400; text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    td { padding: 0.7rem 0.75rem; border-bottom: 1px solid rgba(37,40,48,0.5); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+    /* ── BADGE ── */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .badge-error { background: rgba(255,77,109,0.15); color: var(--accent2); }
+    .badge-ok { background: rgba(168,255,120,0.12); color: var(--accent3); }
+    .badge-info { background: rgba(0,229,255,0.12); color: var(--accent); }
+    /* ── STAT GRID ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+    .stat-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    .stat-value { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+    .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 0.4rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    /* ── GRID ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media(max-width:768px) { .grid-2 { grid-template-columns: 1fr; } }
+    /* ── TERMINAL ── */
+    .terminal {
+      background: #050608;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      font-size: 0.78rem;
+      line-height: 1.7;
+    }
+    .terminal .cmd { color: var(--accent); }
+    .terminal .val { color: var(--accent3); }
+    .terminal .err { color: var(--accent2); }
+    /* ── BAR CHART ── */
+    .bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .bar-label { width: 90px; font-size: 0.75rem; color: var(--muted); text-align: right; flex-shrink: 0; }
+    .bar-track { flex: 1; background: var(--surface2); border-radius: 3px; height: 20px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; display: flex; align-items: center; padding-left: 6px; font-size: 0.7rem; font-weight: 600; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+    .bar-fill.error { background: linear-gradient(90deg, var(--accent2), #ff8fa3); color: var(--bg); }
+    .bar-fill.ok { background: linear-gradient(90deg, var(--accent3), #d4fc79); color: var(--bg); }
+    .bar-fill.info { background: linear-gradient(90deg, var(--accent), #80f0ff); color: var(--bg); }
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  {% if session.user %}
+  <nav>
+    <a href="{{ url_for('dashboard') }}" class="nav-brand">Cloud<span>Log</span> ▸ Analyzer</a>
+    <div class="nav-links">
+      <a href="{{ url_for('dashboard') }}" {% if request.endpoint=='dashboard' %}class="active"{% endif %}>Dashboard</a>
+      <a href="{{ url_for('upload') }}" {% if request.endpoint=='upload' %}class="active"{% endif %}>Upload</a>
+      <a href="{{ url_for('history') }}" {% if request.endpoint=='history' %}class="active"{% endif %}>History</a>
+      <a href="{{ url_for('audit') }}" {% if request.endpoint=='audit' %}class="active"{% endif %}>Audit</a>
+      <span class="nav-badge">{{ session.user }}</span>
+      <a href="{{ url_for('logout') }}" class="btn btn-outline" style="margin-left:0.5rem; padding:0.3rem 0.75rem; font-size:0.75rem;">Logout</a>
+    </div>
+  </nav>
+  {% endif %}
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>CloudLog Analyzer · CS-508 Cloud Computing · Neon DB + Flask + MapReduce</footer>
+</body>
+</html>

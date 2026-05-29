@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Analysis #{{ analysis.id }} · CloudLog Analyzer{% endblock %}
+{% block content %}
+{% set r = analysis.results %}
+
+<div style="margin-bottom:2rem; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+  <div>
+    <div style="font-size:0.72rem; color:var(--muted); margin-bottom:0.3rem; text-transform:uppercase; letter-spacing:0.08em;">Analysis #{{ analysis.id }}</div>
+    <h1 style="font-family:var(--font-display); font-weight:800; font-size:1.5rem; color:var(--accent);">{{ analysis.filename }}</h1>
+    <p style="color:var(--muted); font-size:0.78rem; margin-top:0.2rem;">
+      by {{ analysis.uploaded_by }} ·
+      {{ analysis.uploaded_at.strftime('%B %d, %Y %H:%M') if analysis.uploaded_at else '' }} ·
+      {{ analysis.duration_ms }}ms
+    </p>
+  </div>
+  <a href="{{ url_for('upload') }}" class="btn btn-outline">+ New Analysis</a>
+</div>
+
+<!-- KPI Row -->
+<div class="stat-grid" style="margin-bottom:1.5rem;">
+  <div class="stat-box">
+    <div class="stat-value">{{ r.total_requests or 0 }}</div>
+    <div class="stat-label">Total Requests</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" style="color:var(--accent2);">
+      {% set ec = namespace(n=0) %}
+      {% for v in r.errors.values() %}{% set ec.n = ec.n + v %}{% endfor %}
+      {{ ec.n }}
+    </div>
+    <div class="stat-label">Error Requests</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" style="color:var(--accent3);">{{ r.unique_ips or 0 }}</div>
+    <div class="stat-label">Unique IPs</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" style="color:var(--accent);">{{ r.peak_hour or '—' }}:00</div>
+    <div class="stat-label">Peak Hour</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" style="color:#ffd700;">{{ r.num_chunks or 0 }}</div>
+    <div class="stat-label">Map Chunks</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" style="color:var(--muted);">{{ analysis.duration_ms }}ms</div>
+    <div class="stat-label">Processing Time</div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.5rem;">
+  <!-- HTTP Errors -->
+  <div class="card">
+    <div class="card-title">HTTP Error Codes (4xx / 5xx)</div>
+    {% if r.errors %}
+      {% set max_err = r.errors.values()|max %}
+      {% for code, count in r.errors.items() %}
+      <div class="bar-row">
+        <div class="bar-label">{{ code }}</div>
+        <div class="bar-track">
+          <div class="bar-fill error" style="width:{{ (count / max_err * 100)|int }}%">{{ count }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--accent3); font-size:0.82rem;">✓ No errors detected</p>
+    {% endif %}
+  </div>
+
+  <!-- All Status Codes -->
+  <div class="card">
+    <div class="card-title">All HTTP Status Codes</div>
+    {% if r.status_codes %}
+      {% set max_sc = r.status_codes.values()|max %}
+      {% for code, count in r.status_codes.items() %}
+      <div class="bar-row">
+        <div class="bar-label">{{ code }}</div>
+        <div class="bar-track">
+          <div class="bar-fill {% if code.startswith('2') %}ok{% elif code.startswith('4') or code.startswith('5') %}error{% else %}info{% endif %}"
+               style="width:{{ (count / max_sc * 100)|int }}%">{{ count }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--muted); font-size:0.82rem;">No data</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.5rem;">
+  <!-- Hourly Traffic -->
+  <div class="card">
+    <div class="card-title">Hourly Traffic Distribution</div>
+    {% if r.hourly_traffic %}
+      {% set max_h = r.hourly_traffic.values()|max %}
+      {% for hour, count in r.hourly_traffic.items() %}
+      <div class="bar-row">
+        <div class="bar-label">{{ hour }}:00</div>
+        <div class="bar-track">
+          <div class="bar-fill {% if hour == r.peak_hour %}error{% else %}info{% endif %}"
+               style="width:{{ (count / max_h * 100)|int }}%">{{ count }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--muted); font-size:0.82rem;">No data</p>
+    {% endif %}
+  </div>
+
+  <!-- HTTP Methods -->
+  <div class="card">
+    <div class="card-title">HTTP Methods</div>
+    {% if r.methods %}
+      {% set max_m = r.methods.values()|max %}
+      {% for method, count in r.methods.items() %}
+      <div class="bar-row">
+        <div class="bar-label">{{ method }}</div>
+        <div class="bar-track">
+          <div class="bar-fill ok" style="width:{{ (count / max_m * 100)|int }}%">{{ count }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--muted); font-size:0.82rem;">No data</p>
+    {% endif %}
+    <!-- MapReduce Metadata -->
+    <div class="terminal" style="margin-top:1rem;">
+      <span class="cmd"># Pipeline metadata</span><br/>
+      chunks_created = <span class="val">{{ r.num_chunks }}</span><br/>
+      parallel_workers = <span class="val">{{ r.num_workers }}</span><br/>
+      total_log_lines = <span class="val">{{ analysis.total_lines }}</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

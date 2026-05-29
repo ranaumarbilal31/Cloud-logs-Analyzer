@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}History · CloudLog Analyzer{% endblock %}
+{% block content %}
+<div style="margin-bottom:2rem;">
+  <h1 style="font-family:var(--font-display); font-weight:800; font-size:1.6rem; letter-spacing:-0.02em;">Analysis History</h1>
+  <p style="color:var(--muted); font-size:0.78rem; margin-top:0.3rem;">All {{ analyses|length }} stored MapReduce runs</p>
+</div>
+
+<div class="card">
+  {% if analyses %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th><th>Filename</th><th>By</th><th>Lines</th>
+        <th>Requests</th><th>Errors</th><th>Peak Hour</th>
+        <th>Duration</th><th>Date</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in analyses %}
+      <tr>
+        <td style="color:var(--muted);">{{ a.id }}</td>
+        <td style="color:var(--accent);">{{ a.filename }}</td>
+        <td>{{ a.uploaded_by }}</td>
+        <td>{{ a.total_lines or '—' }}</td>
+        <td>{{ a.results.total_requests if a.results else '—' }}</td>
+        <td>
+          {% if a.results and a.results.errors %}
+            {% set ec = namespace(n=0) %}
+            {% for v in a.results.errors.values() %}{% set ec.n = ec.n + v %}{% endfor %}
+            <span class="badge {% if ec.n > 0 %}badge-error{% else %}badge-ok{% endif %}">{{ ec.n }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td>{% if a.results %}<span class="badge badge-info">{{ a.results.peak_hour }}:00</span>{% else %}—{% endif %}</td>
+        <td style="color:var(--muted);">{{ a.duration_ms }}ms</td>
+        <td style="color:var(--muted); font-size:0.72rem;">{{ a.uploaded_at.strftime('%Y-%m-%d %H:%M') if a.uploaded_at else '' }}</td>
+        <td><a href="{{ url_for('result', analysis_id=a.id) }}" class="btn btn-outline" style="padding:0.25rem 0.6rem; font-size:0.72rem;">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center; padding:3rem; color:var(--muted);">No analyses yet.</div>
+  {% endif %}
+</div>
+{% endblock %}
