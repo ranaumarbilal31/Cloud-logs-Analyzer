@@ -144,3 +144,4 @@ cloud-log-analyzer/
 ├── .gitignore              # Excludes .env from git
 └── README.md
 ```
+Result= Got 49/60 (A Grade)
