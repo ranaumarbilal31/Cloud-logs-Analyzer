@@ -1,5 +1,5 @@
-# 🔍 Secure Cloud Log Analyzer
-### CS-508 Cloud Computing — Course Project
+#  Secure Cloud Log Analyzer
+### CS-508 Cloud Computing — Course Project : Result= Got 49/60 (A Grade)
 
 A production-grade web application that processes raw Apache/Nginx access logs using a **pure-Python MapReduce pipeline** with parallelism, stores results in **Neon DB (PostgreSQL)**, and enforces **IAM-based access control**.
 
@@ -144,4 +144,4 @@ cloud-log-analyzer/
 ├── .gitignore              # Excludes .env from git
 └── README.md
 ```
-Result= Got 49/60 (A Grade)
+
